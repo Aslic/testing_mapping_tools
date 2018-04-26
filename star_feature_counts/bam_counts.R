@@ -19,21 +19,6 @@ library(Rsubread)
 setwd("~/Desktop/genomeAligned")
 filenames<-list.files(pattern = ".bam")
 
-#use Rsubread for exon counting and then grouping them by transcript id
-gtffile <- "/Users/apetenkaya/Desktop/reference_files/Homo_sapiens.GRCh38.92.chr.gtf"
-fc <- featureCounts(files=filenames, 
-                    annot.ext=gtffile, 
-                    isGTFAnnotationFile=TRUE,
-                    isPairedEnd=FALSE,
-                    GTF.featureType="exon",
-                    GTF.attrType="transcript_id",
-                    allowMultiOverlap = FALSE,
-                    countMultiMappingReads = TRUE)
-
-genome_counts<-fc$counts
-genome_counts<-genome_counts[!rowSums(genome_counts)==0,]
-setwd("~/Desktop")
-write.csv(genome_counts,"genome_al_star_counts.csv")
 
 #use Rsubread for exon counting and then grouping them by gene id
 
