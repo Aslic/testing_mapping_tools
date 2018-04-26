@@ -98,7 +98,7 @@ setwd("gene_grouped_reads")
 write.csv(gene_kallisto,"gene_kallisto.csv",row.names = FALSE)
 write.csv(gene_salmon,"gene_salmon.csv",row.names = FALSE)
 write.csv(gene_ground,"gene_ground",row.names = FALSE)
-write.csv(gene_star1,"gene_star1",row.names = FALSE)
+write.csv(gene_star2,"gene_star2",row.names = FALSE)
 
 
 ```
