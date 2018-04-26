@@ -6,8 +6,12 @@ This experiment was performed to compare sensitivities of alignment-independent 
 
 Shortly, alignment independent methods work by assigning the  most likely transcript for each read while alignment dependent methods align the reads to a reference genome. 
 While alignment independent methods are significantly faster than the alignment dependent methods, alignment dependent methods are necessary for discovering novel features.
-For the purposes of this experiment, I focused on both gene level and transcription level quantification for calculating loss of information through different workflows.
+For the purposes of this experiment, I focused on both gene level quantification for calculating loss of information through different workflows.
 
+#Data Simulation:
+Experimental data was simulated using Polyester R package which uses negative binomial distribution and an input fasta file for transcripts to simulate the dataset. Data was only 
+simulated for transcripts on human chromosome 22 and ~10% of the transcripts were set to be differentially expressed between 2 groups where each group contained 8 replicates.
+Input data was quantified by summing created reads per gene.
 
 
 
