@@ -1,0 +1,84 @@
+---
+title: "rna_seq_simulation"
+output: html_notebook
+---
+
+Goal: To simulate differential expression at different thresholds to be able to measure effects of alignment on sensitivity.
+
+
+```{r}
+library(polyester)
+library(Biostrings)
+```
+
+Polyester takes a fasta file that contains the simulation target transcripts as an input. For this experiment We'll use the human chromosome 22 that is provided by the package 
+```{r}
+#input
+set.seed(1234)
+fasta_file = system.file('extdata', 'chr22.fa', package='polyester')
+numtx = count_transcripts(fasta_file)
+fasta = readDNAStringSet(fasta_file)
+#shuffle the fasta file row wise
+fasta <- sample(fasta)
+```
+This function creates a matrix of fold changes for 10% of the transcripts for 2 groups and returns a list where the first element of the list is a matrix to input downstream and the second elemnent of the list is a dataframe with annonated transcripts. 
+
+```{r}
+fold_matrix<-function(fasta,numtx){
+  result<-list()
+  groups<-2
+  fold_changes = matrix(1,ncol=groups, nrow=numtx)
+  #approximately 10% of the genes are going to be set to be differentially
+  #expressed
+  chunks<-seq(1,numtx,10)[1:round((numtx/10)/10,digits = 0)+1]
+  #this is where we create the fold changes
+  folds<-seq(1.5,length(chunks)/2+1.0,0.5)
+  #to index the fold changes matrix right, we start the index at 1
+  chunks<-c(1,chunks)
+  #Halfway variable is created as a marker to start assigning over expression to second group
+  halfway<-round(length(chunks)/2,digits = 0)
+  for(i in 1:length(chunks)){
+    if(i<length(chunks)){
+      if(i<=halfway){
+    fold_changes[chunks[i]:chunks[i+1]-1,1]<-folds[i]}else{
+      fold_changes[chunks[i]:chunks[i+1]-1,2]<-folds[i]
+      }
+    }
+  }
+  result[[1]]<-fold_changes
+  row.names(fold_changes)<-names(fasta)
+  result[[2]]<-fold_changes
+  return(result)
+}
+```
+Creating the inputs for the simulated experiment 
+```{r}
+#To keep the replicates similar to range of experiments in the lab we'll have 8 samples per group. 
+#assinging random loess model to samples 
+set.seed(1234)
+cg_model<-sample(0:7,16,replace = TRUE)
+foldm<-fold_matrix(fasta,numtx)
+basereads<-round(20 * width(fasta) / 100) #20X coverage
+```
+Simulating experiments without bias
+```{r}
+writeXStringSet(fasta, 'chr22_shuffled.fa')
+simulate_experiment('chr22_shuffled.fa',
+                    num_reps=c(8,8),
+                    reads_per_transcript=basereads,
+                    fold_changes=foldm[[1]],
+                    outdir='simulated_reads1',
+                    paired = FALSE,
+                    seed=1234)
+```
+Experiment can be simulated by  gc bias as well using loess models provided by the packages. They are referenced as integers from 1 to 7 and 0 indicates no bias. However, using the sample biases as an array or a list argument fails. Opened an issue on github. 
+
+simulate_experiment('chr22_shuffled.fa',
+                    num_reps=c(8,8),
+                    reads_per_transcript=basereads,
+                    fold_changes=foldm[[1]],
+                    outdir='simulated_readswBias',
+                    paired = FALSE,
+                    gcbias = as.list(cg_model),
+                    seed=1234)
+
