@@ -1,18 +1,5 @@
-source("https://bioconductor.org/biocLite.R")
-#biocLite("Rsamtools")
-#biocLite("TxDb.Hsapiens.UCSC.hg19.knownGene")
-#library(TxDb.Hsapiens.UCSC.hg19.knownGene)
-#biocLite("BiocParallel")
-#biocLite("GenomicAlignments")
-#biocLite("DESeq2")
-set.seed(1234)
-#library(BiocParallel)
-#library(GenomicAlignments)
+
 library(Rsamtools)
-#library(stringr)
-#library(magrittr)
-#library(DESeq2)
-#library(plyr)
 library(Rsubread)
 
 ################feature count of genome aligned samples##############
