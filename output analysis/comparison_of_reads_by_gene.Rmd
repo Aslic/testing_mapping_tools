@@ -12,7 +12,6 @@ setwd("/Users/apetenkaya/Desktop/gene_grouped_reads")
 gene_kallisto<-read.csv("gene_kallisto.csv",header = TRUE, stringsAsFactors = FALSE)
 gene_salmon<-read.csv("gene_salmon.csv",header = TRUE, stringsAsFactors = FALSE)
 gene_ground<-read.csv("gene_ground.csv",header = TRUE, stringsAsFactors = FALSE)
-gene_star1<-read.csv("gene_star1.csv",header = TRUE, stringsAsFactors = FALSE)
 gene_star2<-read.csv("gene_star2.csv",header = TRUE, stringsAsFactors = FALSE)
 
 ```
@@ -67,14 +66,12 @@ return(m_df)
 ```{r}
 ground_measure_mard(gene_ground,gene_kallisto)
 ground_measure_mard(gene_ground, gene_salmon)
-ground_measure_mard(gene_ground, gene_star1)
 ground_measure_mard(gene_ground, gene_star2)
 ground_measure_mard(gene_ground, gene_ground)
 ```
 ```{r}
 ground_measure(gene_ground,gene_kallisto)
 ground_measure(gene_ground, gene_salmon)
-ground_measure(gene_ground, gene_star1)
 ground_measure(gene_ground, gene_star2)
 ground_measure(gene_ground, gene_ground)
 ```
@@ -100,21 +97,18 @@ print("input vs kallisto output")
 plotter(gene_ground,gene_kallisto)
 print("input vs salmon output")
 plotter(gene_ground,gene_salmon)
-print("input vs star1 output")
-plotter(gene_ground,gene_star1)
 print("input vs star2 output")
 plotter(gene_ground, gene_star2)
 ```
 ```{r}
 common_salmon<-intersect(gene_ground$Gene.name,gene_salmon$Gene.name)
 common_kallisto<-intersect(gene_ground$Gene.name,gene_kallisto$Gene.name)
-common_star1<-intersect(gene_ground$Gene.name, gene_star1$Gene.name)
 common_star2<-intersect(gene_ground$Gene.name, gene_star2$Gene.name)
 
-res<-data.frame("label"=c("input_gene_number", "Number of gene captured by Kallisto","Number of gene captured by Salmon",
-                          "Number of gene captured by star1", "Number of gene captured by star2"), "captured"=c(length(gene_ground$Gene.name), length(common_kallisto), length(common_salmon), length(common_star1),length(common_star2)))
+res<-data.frame("label"=c("input_gene_number", "Number of genes captured by Kallisto","Number of genes captured by Salmon",
+                          "Number of gene captured by star"), "captured"=c(length(gene_ground$Gene.name), length(common_kallisto), length(common_salmon),length(common_star2)))
 res$total<-c(length(gene_ground$Gene.name),length(gene_kallisto$Gene.name),
-             length(gene_salmon$Gene.name),length(gene_star1$Gene.name),length(gene_star2$Gene.name))
+             length(gene_salmon$Gene.name),length(gene_star2$Gene.name))
 
 res$percentage<-round(res$captured/res$total,digits=2)*100
 
