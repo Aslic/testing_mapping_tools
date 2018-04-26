@@ -1,0 +1,186 @@
+---
+title: "Differential experession comparison"
+output: html_notebook
+---
+```{r}
+library(DESeq2)
+library(Rsubread)
+library(BiocParallel)
+library(GenomicAlignments)
+library(Rsamtools)
+library(stringr)
+library(magrittr)
+library(DESeq2)
+library(plyr)
+#read in the polyester output that annotates which transcript is upregulated by how much
+ground<-read.csv("~/Desktop/simulated_reads1/sim_tx_info.txt",header = TRUE, sep = "\t")
+#to make this comparable to the output files where we calculated reads per gene we'll convert the folds 
+#per gene as well. Read in the other files
+refseq_lookup<-read.table("~/Desktop/mart_export.txt",header = TRUE, sep = ",")
+gene_kallisto<-read.csv("~/Desktop/gene_grouped_reads/gene_kallisto.csv",header = TRUE, stringsAsFactors = FALSE)
+gene_salmon<-read.csv("~/Desktop/gene_grouped_reads/gene_salmon.csv",header = TRUE, stringsAsFactors = FALSE)
+gene_ground<-read.csv("~/Desktop/gene_grouped_reads/gene_ground.csv",header = TRUE, stringsAsFactors = FALSE)
+gene_star2<-read.csv("~/Desktop/gene_grouped_reads/gene_star2.csv",header = TRUE, stringsAsFactors = FALSE)
+```
+
+We need to clean up the description of the transcript ids to annotate them
+```{r}
+library(reshape2)
+cols<-colsplit(ground$transcriptid,"\\|",c("gi","id1","ref","refseq_mrna","gene.name"))
+cols$ncbi_root<-gsub(".*[_]([^.]+)[.].*", "\\1", cols$refseq_mrna)
+cols$ncbi_root<-paste0(substr(cols$refseq_mrna,1,3),cols$ncbi_root)
+ground$ncbi_root<-cols$ncbi_root
+```
+
+create the gene look up for the refseq mrna ids 
+```{r}
+ground_lookup1<-subset(refseq_lookup, select=c(Gene.name, RefSeq.mRNA.ID))
+ground_lookup2<-subset(refseq_lookup, select=c(Gene.name, RefSeq.ncRNA.ID))
+names(ground_lookup1)[2]<-"id"
+names(ground_lookup2)[2]<-"id"
+ground_lookup<-rbind(ground_lookup1,ground_lookup2)
+ground_lookup<-ground_lookup[!ground_lookup$id=="",]
+```
+Get the gene names for mrna ids
+```{r}
+names(ground)[6]<-"id"
+ground_i<-join(ground, ground_lookup,by="id")
+ground_fold<-aggregate(.~Gene.name, ground_i[,c(2,3,7)],mean)
+```
+
+```{r}
+coldata_maker<-function(x){
+  coldata<-data.frame("SampleName"=names(x)[2:17], "groups"=c(rep(0,8),rep(1,8)))
+  coldata$groups<-as.factor(as.character(coldata$groups))
+  coldata$groups %<>% relevel("0") 
+  return(coldata)
+}
+```
+Reformatting the count matrices so that gene names are row names
+
+```{r}
+cleaner<-function(x){
+  rownames(x)<-x$Gene.name #make ids the row names
+  dat<-x[,-c(1)]  #remove genenames
+  dat_count<-lapply(dat[,1:ncol(dat)], function(x){
+  if (is.numeric(x))  as.integer(as.numeric(x)) else x }) #deSeq2 works with integers
+  dat_count<-as.data.frame(dat_count)
+  row.names(dat_count)<-row.names(dat)
+  return(dat_count)
+}
+```
+Constructing the DESeqDataSet and getting the results
+
+```{r}
+dataset_maker<-function(x){
+  ddsMat <- DESeqDataSetFromMatrix(countData = x,
+                                   colData = coldata_maker(x),
+                                  design = ~ groups)
+  dds<-DESeq(ddsMat)
+  res<-results(dds)
+  return(res)
+}
+
+```
+
+
+
+```{r,echo=FALSE}
+
+results_kallisto<-dataset_maker(cleaner(gene_kallisto))
+results_ground<-dataset_maker(cleaner(gene_ground))
+results_salmon<-dataset_maker(cleaner(gene_salmon))
+results_star<-dataset_maker(cleaner(gene_star2))
+```
+
+```{r}
+ground_fold$fold_change_expected<-ground_fold$foldchange.2/ground_fold$foldchange.1
+```
+Let's look at the correlation between the fold changes
+```{r}
+cor_mod<-function(ground,test){
+  temp1<-subset(ground, select=c(Gene.name, fold_change_expected))
+  temp2<-data.frame("Gene.name"=row.names(test),"fold_change_observed"=2^test$log2FoldChange)
+  temp<-join(temp1,temp2,by="Gene.name")
+  temp$Gene.name<-as.character(temp$Gene.name)
+  temp[is.na(temp[,3]),]<-0
+  cor(temp[,2],temp[,3])
+}
+```
+```{r}
+cor_mod(ground_fold,results_kallisto)
+cor_mod(ground_fold,results_salmon)
+cor_mod(ground_fold,results_star)
+```
+
+```{r}
+#genes that differ in foldchange in input
+input_genes<-ground_fold[!ground_fold$fold_change_expected==1,]
+#differential called genes in kallisto, salmon and star
+salmon_genes<-results_salmon[results_salmon$padj<=0.05 & !is.na(results_salmon$padj),]
+kallisto_genes<-results_kallisto[results_kallisto$padj<=0.05 & !is.na(results_kallisto$padj),]
+star_genes<-results_star[results_star$padj<=0.05 & !is.na(results_star$padj),]
+```
+
+```{r}
+star_captured<-length(intersect(row.names(star_genes),input_genes$Gene.name))
+kallisto_captured<-length(intersect(row.names(kallisto_genes),input_genes$Gene.name))
+salmon_captured<-length(intersect(row.names(salmon_genes),input_genes$Gene.name))
+
+overall<-data.frame("labels"=c("# of genes whose expression set to be different","number of those captured by kallisto","number of those captures by salmon", "number of those captures by star"), "number"=c(length(input_genes$Gene.name), kallisto_captured,salmon_captured,star_captured))
+
+
+```
+There are also number of genes that are not modified to be different in fold changes that were identified by algorithms
+```{r}
+star_false_captured<-length(setdiff(row.names(star_genes),input_genes$Gene.name))
+kallisto_false_captured<-length(setdiff(row.names(kallisto_genes),input_genes$Gene.name))
+salmon_false_captured<-length(setdiff(row.names(salmon_genes),input_genes$Gene.name))
+
+res2<-data.frame("False positives"=c(kallisto_false_captured,salmon_false_captured,star_false_captured))
+row.names(res2)<-c("kallisto","salmon","star")
+print(res2)
+
+```
+
+Let's look at the false positives
+
+These genes may not be on chromosome 22. Let's check
+
+```{r}
+chromosome<-read.table("~/Desktop/gene_chromosome.txt",header = TRUE, sep=",")
+
+print("salmon false positives")
+chromosome[chromosome$Gene.name %in% salmon_false,]
+
+print("kallisto false positives")
+chromosome[chromosome$Gene.name %in% kallisto_false,]
+
+print("star false positives")
+chromosome[chromosome$Gene.name %in% star_false,]
+
+
+```
+Genes missed by all three algorithms
+```{r}
+Reduce(intersect,list(salmon_false,kallisto_false,star_false))
+```
+
+
+```{r}
+#The gene that was missed by star
+
+star_missed<-setdiff(input_genes$Gene.name,row.names(star_genes))
+results_star[row.names(results_star)==star_missed,]
+print(star_missed)
+```
+Possibly it was not mapped correctly 
+
+```{r}
+
+saveRDS(results_ground,"results_input.RDS")
+saveRDS(results_kallisto,"kallisto_results.RDS")
+saveRDS(results_salmon,"salmon_results.RDS")
+saveRDS(results_star,"star_results.RDS")
+```
+
