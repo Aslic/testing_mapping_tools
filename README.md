@@ -8,7 +8,7 @@ Shortly, alignment independent methods work by assigning the  most likely transc
 While alignment independent methods are significantly faster than the alignment dependent methods, alignment dependent methods are necessary for discovering novel features.
 For the purposes of this experiment, I focused on both gene level quantification for calculating loss of information through different workflows.
 
-##Data Simulation:
+## Data Simulation:
 
 Experimental data was simulated using Polyester R package which uses negative binomial distribution and an input fasta file for transcripts to simulate the dataset. Data was only 
 simulated for transcripts on human chromosome 22 and ~10% of the transcripts were set to be differentially expressed between 2 groups where each group contained 8 replicates.
