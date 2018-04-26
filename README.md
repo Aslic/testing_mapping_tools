@@ -16,7 +16,10 @@ Input data was quantified by summing created reads per gene.
 
 ## Evaluation:
 
-Absolute relative difference between gene counts were calculated for each sample with the following formula:
+Performance of different feature mapping methods were evaluated by comparing percentage of genes that were correctly aligned and identified as differentially expressed.
+Absolute relative difference and Pearson's correletion coefficient was also caulcuated between the input and output samples. 
+
+
 
 
 
