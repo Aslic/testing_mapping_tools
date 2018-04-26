@@ -1,0 +1,1 @@
+Genome (STAR) and transcriptome (Salmon, Kallisto) indexes will need to be created once for each assembly. They can be reused for mapping different samples to the same genome. This directory contains code used for indexing. 
