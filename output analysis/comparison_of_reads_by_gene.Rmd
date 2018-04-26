@@ -1,0 +1,123 @@
+---
+title: "comparing reads per gene"
+output: html_notebook
+---
+
+
+
+```{r}
+library(reshape2)
+library(ggplot2)
+setwd("/Users/apetenkaya/Desktop/gene_grouped_reads")
+gene_kallisto<-read.csv("gene_kallisto.csv",header = TRUE, stringsAsFactors = FALSE)
+gene_salmon<-read.csv("gene_salmon.csv",header = TRUE, stringsAsFactors = FALSE)
+gene_ground<-read.csv("gene_ground.csv",header = TRUE, stringsAsFactors = FALSE)
+gene_star1<-read.csv("gene_star1.csv",header = TRUE, stringsAsFactors = FALSE)
+gene_star2<-read.csv("gene_star2.csv",header = TRUE, stringsAsFactors = FALSE)
+
+```
+
+```{r}
+ground_measure_mard<-function(ground,test){
+  dmards<-vector()
+  samples<-vector()
+  for (i in 2:17){
+    temp1<-ground[,c(1,i)]
+    temp2<-test[,c(1,i)]
+    temp<-join(temp1,temp2,by="Gene.name")
+    temp[is.na(temp[,3]),]<-0
+    transcript_diff<-abs(temp[,2]-temp[,3])
+    total<-temp[,2]+temp[,3]
+    mard<-transcript_diff/total
+    mard[is.na(mard)]<-0
+    dmards[i]<-mean(mard)
+  }
+  mard<-data.frame("sample"=c(1:16),"MARD"=dmards[2:length(dmards)])
+  return(mard)}
+
+
+
+ground_measure<-function(ground,test){
+coefficients<-vector()
+samples<-vector()
+for (i in 2:17){
+  temp1<-ground[,c(1,i)]
+  temp2<-test[,c(1,i)]
+  temp<-join(temp1,temp2,by="Gene.name")
+  temp[is.na(temp[,3]),]<-0
+  coefficients[i]<-cor(temp[,2],temp[,3])
+  samples[i]<-names(temp1)[2]
+}
+pearson<-data.frame("sample"=c(1:16),"Pearson_coeff"=coefficients[2:length(coefficients)])
+return(pearson)}
+
+converter<-function(df){
+mean_df<-t(apply(df[,2:17],1,function(x)log2(x+1)))
+m_df<-rowMeans(mean_df)
+m_df<-as.data.frame(m_df)
+names(m_df)<-c("log2_count_df")
+m_df<-cbind(df$Gene.name ,m_df)
+names(m_df)[1]<-"Gene.name"
+m_df[is.na(m_df)]<-0
+return(m_df)
+}
+
+```
+
+```{r}
+ground_measure_mard(gene_ground,gene_kallisto)
+ground_measure_mard(gene_ground, gene_salmon)
+ground_measure_mard(gene_ground, gene_star1)
+ground_measure_mard(gene_ground, gene_star2)
+ground_measure_mard(gene_ground, gene_ground)
+```
+```{r}
+ground_measure(gene_ground,gene_kallisto)
+ground_measure(gene_ground, gene_salmon)
+ground_measure(gene_ground, gene_star1)
+ground_measure(gene_ground, gene_star2)
+ground_measure(gene_ground, gene_ground)
+```
+
+
+```{r}
+plotter<-function(df1,df2){
+  df1<-converter(df1)
+  df2<-converter(df2)
+  names(df1)[2]<-"ground_truth_log2_count"
+  names(df2)[2]<-"test_log2_count"
+  d1<-join(df1,df2,by="Gene.name")
+  d1<-d1[!is.na(d1[,3]),]
+  d1$pc<-predict(prcomp(~ground_truth_log2_count+test_log2_count, d1))[,1]
+  ggplot(d1, aes(ground_truth_log2_count, test_log2_count, color = pc)) +
+  geom_point(shape = 16, size = 4, show.legend = FALSE, alpha = .3) +
+  theme_minimal() +scale_color_gradient(low = "#0091ff", high = "#f0650e")
+}
+```
+
+```{r}
+print("input vs kallisto output")
+plotter(gene_ground,gene_kallisto)
+print("input vs salmon output")
+plotter(gene_ground,gene_salmon)
+print("input vs star1 output")
+plotter(gene_ground,gene_star1)
+print("input vs star2 output")
+plotter(gene_ground, gene_star2)
+```
+```{r}
+common_salmon<-intersect(gene_ground$Gene.name,gene_salmon$Gene.name)
+common_kallisto<-intersect(gene_ground$Gene.name,gene_kallisto$Gene.name)
+common_star1<-intersect(gene_ground$Gene.name, gene_star1$Gene.name)
+common_star2<-intersect(gene_ground$Gene.name, gene_star2$Gene.name)
+
+res<-data.frame("label"=c("input_gene_number", "Number of gene captured by Kallisto","Number of gene captured by Salmon",
+                          "Number of gene captured by star1", "Number of gene captured by star2"), "captured"=c(length(gene_ground$Gene.name), length(common_kallisto), length(common_salmon), length(common_star1),length(common_star2)))
+res$total<-c(length(gene_ground$Gene.name),length(gene_kallisto$Gene.name),
+             length(gene_salmon$Gene.name),length(gene_star1$Gene.name),length(gene_star2$Gene.name))
+
+res$percentage<-round(res$captured/res$total,digits=2)*100
+
+print(res)
+```
+
