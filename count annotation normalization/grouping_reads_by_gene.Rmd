@@ -1,0 +1,114 @@
+---
+title: "grouping_reads_by_gene"
+output: html_notebook
+---
+
+
+```{r}
+library(ggplot2)
+library(plyr)
+setwd("~/Desktop")
+refseq_lookup<-read.table("mart_export.txt",header = TRUE, sep = ",")
+
+
+ground_truth<-read.csv("ground_truth_counts.csv",header = TRUE, stringsAsFactors = FALSE)
+kallisto<-read.csv("kallisto_counts.csv",header = TRUE,stringsAsFactors = FALSE)
+salmon<-read.csv("salmon_counts.csv", header = TRUE, stringsAsFactors = FALSE)
+star_genom<-read.csv("genome_al_star_counts.csv",header = TRUE, stringsAsFactors = FALSE)
+star_genom_gene<-read.csv("genome_al_star_gene_counts.csv",header = TRUE, stringsAsFactors = FALSE)
+names(star_genom)[1]<-"id"
+names(star_genom_gene)[1]<-"id"
+
+```
+
+Kallisto and salmon outputs includes transcript ids with versions while star output is annotated with transcript ids without the version.  Multiple versions might represent the same transcript
+Let's see how many unique and non unique we have
+
+```{r}
+length(unique(kallisto$id))
+length(unique(substr(kallisto$id,1,15)))
+
+length(unique(salmon$id))
+length(unique(substr(salmon$id,1,15)))
+
+```
+Each transcript id with a version represents a unique trancript (we already excluded the transcripts whose rowSums==0 before we saved these files). Let's filter out rows where the total number of transcripts is less than 16 (on average 1 trancript per sample)
+```{r}
+kallisto_1<-kallisto[rowSums(kallisto[,3:ncol(kallisto)])>16,]
+dim(kallisto_1)
+salmon_1<-salmon[rowSums(salmon[,3:ncol(salmon)])>16,]
+dim(salmon_1)
+star_1<-star_genom[rowSums(star_genom[,2:ncol(star_genom)])>16,]
+dim(star_1)
+star_2<-star_genom_gene[rowSums(star_genom_gene[,2:ncol(star_genom_gene)])>16,]
+dim(star_2)
+```
+Star has given us the lowest number of transcripts. However within star alignment grouping the features (exons) by gene vs by transcrip gives us higher number. To be able to make results comparable let's convert everthing to gene name.
+```{r}
+pseudo_lookup<-subset(refseq_lookup, select=c(Transcript.stable.ID.version,Gene.name))
+
+names(pseudo_lookup)[1]<-"id"
+pseudo_lookup$id<-as.character(pseudo_lookup$id)
+pseudo_lookup$Gene.name<-as.character(pseudo_lookup$Gene.name)
+kallisto_2<-join(kallisto_1,pseudo_lookup,by="id")
+kallisto_2<-kallisto_2[!duplicated(kallisto_2),]
+salmon_2<-join(salmon_1,pseudo_lookup,by="id")
+salmon_2<-salmon_2[!duplicated(salmon_2),]
+```
+mapping the star reads to gene names as well
+```{r, echo=FALSE}
+star_lookup1<-subset(refseq_lookup, select=c(Gene.name, Transcript.stable.ID))
+star_lookup2<-subset(refseq_lookup, select=c(Gene.name, Gene.stable.ID))
+names(star_lookup1)[2]<-"id"
+names(star_lookup2)[2]<-"id"
+star_1_m<-join(star_1, star_lookup1,by="id")
+star_2_m<-join(star_2, star_lookup2, by="id")
+star_1_m<-star_1_m[!duplicated(star_1_m),]
+star_2_m<-star_2_m[!duplicated(star_2_m),]
+
+```
+Converting the ground truth transcripts to gene names
+```{r}
+ground_lookup1<-subset(refseq_lookup, select=c(Gene.name, RefSeq.mRNA.ID))
+ground_lookup2<-subset(refseq_lookup, select=c(Gene.name, RefSeq.ncRNA.ID))
+names(ground_lookup1)[2]<-"id"
+names(ground_lookup2)[2]<-"id"
+ground_lookup<-rbind(ground_lookup1,ground_lookup2)
+ground_lookup<-ground_lookup[!ground_lookup$id=="",]
+```
+
+```{r}
+ground_1<-join(ground_truth,ground_lookup,by="id")
+ground_1<-ground_1[!duplicated(ground_1),]
+ground_1<-ground_1[!is.na(ground_1$Gene.name),]
+```
+This is a function to calculate total reads per gene
+```{r}
+read_per_gene<-function(df){
+  mat<-aggregate(.~Gene.name, df[,-1], sum)
+  return(mat)
+}
+```
+
+```{r}
+kallisto_2<-kallisto_2[,-1]
+salmon_2<-salmon_2[,-1]
+
+gene_kallisto<-read_per_gene(kallisto_2)
+gene_salmon<-read_per_gene(salmon_2)
+gene_ground<-read_per_gene(ground_1)
+gene_star1<-read_per_gene(star_1_m)
+gene_star2<-read_per_gene(star_2_m)
+```
+```{r}
+dir.create("gene_grouped_reads")
+setwd("gene_grouped_reads")
+write.csv(gene_kallisto,"gene_kallisto.csv",row.names = FALSE)
+write.csv(gene_salmon,"gene_salmon.csv",row.names = FALSE)
+write.csv(gene_ground,"gene_ground",row.names = FALSE)
+write.csv(gene_star1,"gene_star1",row.names = FALSE)
+write.csv(gene_star2,"gene_star2",row.names = FALSE)
+
+
+```
+
