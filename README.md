@@ -31,8 +31,9 @@ Absolute relative difference (ARD) and Pearson's correletion coefficient was als
 
 
 
-![An awesome example image](/sources/images/Salmon_aligned.png)*My caption*
-
+![image](/sources/images/Salmon_aligned.png)*Salmon gene counts aligned to ground truth*
+![image](/sources/images/Star_aligned.png)*Star gene counts aligned to ground truth*
+![image](/sources/images/Kallisto_aligned.png)*Kallisto gene counts aligned to ground truth*
 
 
 
