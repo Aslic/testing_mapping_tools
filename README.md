@@ -17,18 +17,17 @@ Input data was quantified by summing created reads per gene.
 ## Evaluation:
 
 Performance of different feature mapping methods were evaluated by comparing percentage of genes that were correctly aligned and identified as differentially expressed.
-Absolute relative difference and Pearson's correletion coefficient was also caulcuated between the input and output samples. 
+Absolute relative difference (ARD) and Pearson's correletion coefficient was also caulcuated between the input and output samples. 
 
-| Default aligned | Left aligned | Center aligned  | Right aligned  |
-|-----------------|:-------------|:---------------:|---------------:|
-| First body part | Second cell  | Third cell      | fourth cell    |
-| Second line     | foo          | **strong**      | baz            |
-| Third line      | quux         | baz             | bar            |
-|-----------------+--------------+-----------------+----------------|
-| Second body     |              |                 |                |
-| 2nd line        |              |                 |                |
-|-----------------+--------------+-----------------+----------------|
-| Third body      |              |                 | Foo            |
+## Results
+
+| Method | Mean ARD | R | % of correctly Aligned Genes  | % of correctly identified DEGS|
+|--------|----------|---|-------------------------------|-------------------------------|
+| First b| Second ce| Th| fourth cell                   |                               |
+| Second | foo      | **| baz                           |                               | 
+| Third l| quux     | ba| bar                           |                               |
+|--------+----------+---+-------------------------------+-------------------------------|
+
 {: .custom-class #custom-id}
 
 
