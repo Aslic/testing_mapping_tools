@@ -27,7 +27,7 @@ Absolute relative difference (ARD) and Pearson's correletion coefficient was als
 | Second | foo      | **| baz                           |                               | 
 | Third l| quux     | ba| bar                           |                               |
 
-{: .custom-class #custom-id}
+
 
 
 
