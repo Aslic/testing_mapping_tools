@@ -35,6 +35,11 @@ Absolute relative difference (ARD) and Pearson's correletion coefficient was als
 ![image](/sources/images/Star_aligned.png)*Star gene counts aligned to ground truth*
 ![image](/sources/images/Kallisto_aligned.png)*Kallisto gene counts aligned to ground truth*
 
+## Conclusions
 
+Overall, performance of Salmon and Kallisto were very similar and aligned gene counts had lower absolute relative differences and higher r than gene counts that were calculated after
+STAR alignment. STAR alignment had greater sensitivity in picking up genes with low feature counts and capturing a higher percentage of differentially expressed genes. 
+While differences are small, flexibility that the genome alignment provides for downstream exploratory analysis together with its sensitivity outweighs the speed the low memory
+requirement the non alignment dependent methods offer. 
 
 
