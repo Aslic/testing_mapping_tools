@@ -31,7 +31,7 @@ Absolute relative difference (ARD) and Pearson's correletion coefficient was als
 
 
 
-
+![An awesome example image](/sources/images/Salmon_aligned.png)*My caption*
 
 
 
