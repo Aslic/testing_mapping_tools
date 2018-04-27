@@ -21,11 +21,11 @@ Absolute relative difference (ARD) and Pearson's correletion coefficient was als
 
 ## Results
 
-| Method | Mean ARD | R | % of correctly Aligned Genes  | % of correctly identified DEGS|
-|--------|----------|---|-------------------------------|-------------------------------|
-| First b| Second ce| Th| fourth cell                   |                               |
-| Second | foo      | **| baz                           |                               | 
-| Third l| quux     | ba| bar                           |                               |
+| Method | Mean ARD | R   | % of correctly Aligned Genes  | % of correctly identified DEGS|
+|--------|----------|-----|-------------------------------|-------------------------------|
+|Kallisto| 0.03     | 0.98| 85%                           |     91%                       |
+| Salmon |   0.03   | 0.99| 85%                           |         91%                   | 
+| Star   |   0.1    | 0.96| 95%                           |     99%                       |
 
 
 
