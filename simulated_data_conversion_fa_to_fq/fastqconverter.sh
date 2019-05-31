@@ -5,5 +5,5 @@ do
 samp=`basename ${fn}`
 echo "${samp}"
 echo "${fn}"
-	perl /Users/apetenkaya/Desktop/fasta_to_fastq.pl "${fn}" > "simulated_reads1/logs/converted_${samp}.fq"
+	perl /fasta_to_fastq.pl "${fn}" > "simulated_reads1/logs/converted_${samp}.fq"
 done
