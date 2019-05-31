@@ -1,4 +1,4 @@
-setwd("/Users/apetenkaya/Desktop/kallisto/kallisto_ch22_bs100/")#give the directory where the read folders are stored
+setwd("/kallisto/kallisto_ch22_bs100/")#give the directory where the read folders are stored
 dirs<-list.files()
 names<-vector()
 files<-list()
