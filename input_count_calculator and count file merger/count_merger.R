@@ -16,5 +16,5 @@ read_mat<-all_files[,grepl("est_counts",names(all_files))] #give the header wher
 read_mat<-cbind(all_files[,1],read_mat)
 names(read_mat)<-c("id",names)
 informative<-read_mat[rowSums(read_mat[2:ncol(read_mat)])!=0,]
-setwd("/Users/apetenkaya/Desktop/")
+setwd("/Data/")
 write.csv(informative,"kallistobs_counts.csv")
